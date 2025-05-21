@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>똥피하기 게임</title>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+<style>
+  /* 화면 꽉 채우기 */
+  body, html {
+    margin: 0; padding: 0; overflow: hidden;
+    height: 100%; width: 100%;
+    background: #87cefa; /* 임시 배경, p5에서 덮어씀 */
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<script>
+let poopImg, charImg;
+let charX, charY, charSize;
+let poopX, poopY, poopSize;
+let poopSpeed;
+let isGameOver = false;
+let poopFlyX, poopFlyY, poopFlySize;
+let score = 0;
+
+function preload() {
+  poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
+  charImg = loadImage('https://i.imgur.com/SBusVCC.png');
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  resetGame();
+  textAlign(LEFT, TOP);
+  textSize(24);
+  fill(255);
+}
+
+function resetGame() {
+  charSize = 80;
+  charX = width / 2;
+  charY = height - charSize - 30;
+  poopSize = 60;
+  poopX = random(poopSize / 2, width - poopSize / 2);
+  poopY = -poopSize;
+  poopSpeed = 5;
+  isGameOver = false;
+  poopFlyX = null;
+  poopFlyY = null;
+  poopFlySize = poopSize;
+  score = 0;
+  loop();
+}
+
+function draw() {
+  drawWindows98BG();
+
+  if (!isGameOver) {
+    tint(255, 0, 0);
+    image(charImg, charX - charSize / 2, charY, charSize, charSize * (charImg.height / charImg.width));
+    noTint();
+
+    image(poopImg, poopX - poopSize / 2, poopY, poopSize, poopSize);
+
+    poopY += poopSpeed;
+
+    let charLeft = charX - charSize / 4;
+    let charRight = charX + charSize / 4;
+    if (
+      poopY + poopSize / 2 >= charY &&
+      poopX > charLeft && poopX < charRight
+    ) {
+      isGameOver = true;
+      poopFlyX = poopX;
+      poopFlyY = poopY;
+      poopFlySize = poopSize;
+      noLoop();
+      loop();
+    } else if (poopY > height) {
+      score++;
+      poopSpeed *= 1.05;
+      charSize *= 1.02;
+      poopX = random(poopSize / 2, width - poopSize / 2);
+      poopY = -poopSize;
+    }
+
+    fill(255);
+    text('Score: ' + score, 10, 10);
+  } else {
+    poopFlyY += 40;
+    poopFlySize *= 1.3;
+    poopFlyX = width / 2;
+
+    background(150, 75, 0, map(poopFlySize, poopSize, width * 3, 0, 150));
+    tint(255, 0, 0);
+    image(poopImg, poopFlyX - poopFlySize / 2, poopFlyY - poopFlySize / 2, poopFlySize, poopFlySize);
+    noTint();
+
+    if (poopFlyY - poopFlySize / 2 > height) {
+      background(150, 75, 0);
+      fill(255, 0, 0);
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      text('GAME OVER', width / 2, height / 2 - 50);
+
+      fill(255);
+      rectMode(CENTER);
+      rect(width / 2, height / 2 + 30, 160, 60, 12);
+      fill(0);
+      textSize(28);
+      text('다시하기', width / 2, height / 2 + 30);
+      noLoop();
+    } else {
+      loop();
+    }
+  }
+}
+
+function drawWindows98BG() {
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(135, 206, 250), color(50, 205, 50), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
+}
+
+function keyPressed() {
+  if (!isGameOver) {
+    if (keyCode === LEFT_ARROW) {
+      charX -= charSize / 2;
+      if (charX < charSize / 2) charX = charSize / 2;
+    } else if (keyCode === RIGHT_ARROW) {
+      charX += charSize / 2;
+      if (charX > width - charSize / 2) charX = width - charSize / 2;
+    }
+  } else {
+    if (keyCode === ENTER) {
+      resetGame();
+    }
+  }
+}
+
+function mousePressed() {
+  if (isGameOver) {
+    let bx = width / 2;
+    let by = height / 2 + 30;
+    let bw = 160;
+    let bh = 60;
+    if (
+      mouseX > bx - bw / 2 &&
+      mouseX < bx + bw / 2 &&
+      mouseY > by - bh / 2 &&
+      mouseY < by + bh / 2
+    ) {
+      resetGame();
+    }
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>
