@@ -6,24 +6,21 @@
 <title>똥피하기 게임</title>
 <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 <style>
-  /* 화면 꽉 채우기 */
   body, html {
     margin: 0; padding: 0; overflow: hidden;
     height: 100%; width: 100%;
-    background: #87cefa; /* 임시 배경, p5에서 덮어씀 */
+    background: #87cefa;
   }
   canvas {
     display: block;
   }
-  /* 방향키 버튼 스타일 */
   button {
-    position: fixed;
+    position: absolute;
     bottom: 20px;
     width: 70px;
     height: 70px;
     font-size: 36px;
     opacity: 0.8;
-    z-index: 1000;
     user-select: none;
     border-radius: 12px;
     border: none;
@@ -32,10 +29,10 @@
     cursor: pointer;
   }
   #leftBtn {
-    left: 30px;
+    left: 40%;
   }
   #rightBtn {
-    right: 30px;
+    left: 55%;
   }
 </style>
 </head>
@@ -63,10 +60,9 @@ function setup() {
   textSize(24);
   fill(255);
 
-  // 방향키 버튼 생성
+  // 방향키 버튼을 캔버스 내부에 위치시키기 위해 parent로 body 대신 캔버스 대신 body로
   leftBtn = createButton('◀');
   leftBtn.id('leftBtn');
-  leftBtn.position(30, windowHeight - 90);
   leftBtn.size(70, 70);
   leftBtn.style('font-size', '36px');
   leftBtn.style('opacity', '0.8');
@@ -74,11 +70,11 @@ function setup() {
   leftBtn.style('border', 'none');
   leftBtn.style('background-color', 'rgba(255,255,255,0.7)');
   leftBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
+  leftBtn.position(width * 0.4, height - 90);
   leftBtn.touchStarted(() => moveLeft());
 
   rightBtn = createButton('▶');
   rightBtn.id('rightBtn');
-  rightBtn.position(windowWidth - 100, windowHeight - 90);
   rightBtn.size(70, 70);
   rightBtn.style('font-size', '36px');
   rightBtn.style('opacity', '0.8');
@@ -86,6 +82,7 @@ function setup() {
   rightBtn.style('border', 'none');
   rightBtn.style('background-color', 'rgba(255,255,255,0.7)');
   rightBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
+  rightBtn.position(width * 0.55, height - 90);
   rightBtn.touchStarted(() => moveRight());
 }
 
@@ -132,7 +129,8 @@ function draw() {
     } else if (poopY > height) {
       score++;
       poopSpeed *= 1.05;
-      charSize *= 1.02;
+      // 캐릭터가 2배씩 커지게 (최대 크기 제한 300)
+      charSize = min(charSize * 2, 300);
       poopX = random(poopSize / 2, width - poopSize / 2);
       poopY = -poopSize;
     }
@@ -221,8 +219,8 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  leftBtn.position(30, windowHeight - 90);
-  rightBtn.position(windowWidth - 100, windowHeight - 90);
+  leftBtn.position(width * 0.4, height - 90);
+  rightBtn.position(width * 0.55, height - 90);
 }
 </script>
 </body>
