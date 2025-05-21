@@ -1,222 +1,170 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>똥피하기 게임</title>
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>똥피하기 게임</title>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+<style>
+  /* 화면 꽉 채우기 */
+  body, html {
+    margin: 0; padding: 0; overflow: hidden;
+    height: 100%; width: 100%;
+    background: #87cefa; /* 임시 배경, p5에서 덮어씀 */
+  }
+  canvas {
+    display: block;
+  }
+</style>
 </head>
 <body>
-  <script>
-    // 여기에 위에서 완성된 p5.js 코드를 그대로 붙여넣기 하세요
-    let characterImg, poopImg;
-    let characterX, characterY;
-    let poopX, poopY;
-    let poopSpeed = 4;
-    let maxPoopSpeed = 15;
+<script>
+let poopImg, charImg;
+let charX, charY, charSize;
+let poopX, poopY, poopSize;
+let poopSpeed;
+let isGameOver = false;
+let poopFlyX, poopFlyY, poopFlySize;
+let score = 0;
 
-    let isGameOver = false;
-    let gameOverFrame = 0;
+function preload() {
+  poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
+  charImg = loadImage('https://i.imgur.com/SBusVCC.png');
+}
 
-    let leftBtn, rightBtn, restartBtn;
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  resetGame();
+  textAlign(LEFT, TOP);
+  textSize(24);
+  fill(255);
+}
 
-    let score = 0;
-    let characterScale = 1;    
-    let maxCharacterScale = 2;
+function resetGame() {
+  charSize = 80;
+  charX = width / 2;
+  charY = height - charSize - 30;
+  poopSize = 60;
+  poopX = random(poopSize / 2, width - poopSize / 2);
+  poopY = -poopSize;
+  poopSpeed = 5;
+  isGameOver = false;
+  poopFlyX = null;
+  poopFlyY = null;
+  poopFlySize = poopSize;
+  score = 0;
+  loop();
+}
 
-    const characterWidthCollision = 30;
+function draw() {
+  drawWindows98BG();
 
-    function preload() {
-      characterImg = loadImage('https://i.imgur.com/SBusVCC.png');
-      poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
+  if (!isGameOver) {
+    tint(255, 0, 0);
+    image(charImg, charX - charSize / 2, charY, charSize, charSize * (charImg.height / charImg.width));
+    noTint();
+
+    image(poopImg, poopX - poopSize / 2, poopY, poopSize, poopSize);
+
+    poopY += poopSpeed;
+
+    let charLeft = charX - charSize / 4;
+    let charRight = charX + charSize / 4;
+    if (
+      poopY + poopSize / 2 >= charY &&
+      poopX > charLeft && poopX < charRight
+    ) {
+      isGameOver = true;
+      poopFlyX = poopX;
+      poopFlyY = poopY;
+      poopFlySize = poopSize;
+      noLoop();
+      loop();
+    } else if (poopY > height) {
+      score++;
+      poopSpeed *= 1.05;
+      charSize *= 1.02;
+      poopX = random(poopSize / 2, width - poopSize / 2);
+      poopY = -poopSize;
     }
 
-    function setup() {
-      createCanvas(320, 480);
-      characterX = width / 2 - 32;
-      characterY = height - 80;
-      poopX = random(width - 64);
-      poopY = -64;
+    fill(255);
+    text('Score: ' + score, 10, 10);
+  } else {
+    poopFlyY += 40;
+    poopFlySize *= 1.3;
+    poopFlyX = width / 2;
 
-      createButtons();
-      textFont('Arial', 20);
-    }
+    background(150, 75, 0, map(poopFlySize, poopSize, width * 3, 0, 150));
+    tint(255, 0, 0);
+    image(poopImg, poopFlyX - poopFlySize / 2, poopFlyY - poopFlySize / 2, poopFlySize, poopFlySize);
+    noTint();
 
-    function draw() {
-      drawWin98Background();
-
-      if (!isGameOver) {
-        poopY += poopSpeed;
-
-        if (poopY > height) {
-          poopY = -64;
-          poopX = random(width - 64);
-          poopSpeed = min(poopSpeed + 1, maxPoopSpeed);
-          score++;
-
-          characterScale = min(characterScale + 0.05, maxCharacterScale);
-        }
-
-        push();
-        tint(255, 100, 100);
-        translate(characterX + 32, characterY + 32);
-        scale(characterScale);
-        imageMode(CENTER);
-        image(characterImg, 0, 0, 64, 64);
-        pop();
-        noTint();
-
-        imageMode(CORNER);
-        image(poopImg, poopX, poopY, 64, 64);
-
-        let charLeft = characterX + 32 - (characterWidthCollision / 2) * characterScale;
-        let charRight = characterX + 32 + (characterWidthCollision / 2) * characterScale;
-        let charTop = characterY;
-        let charBottom = characterY + 64 * characterScale;
-
-        let poopLeft = poopX;
-        let poopRight = poopX + 64;
-        let poopTop = poopY;
-        let poopBottom = poopY + 64;
-
-        if (
-          poopRight > charLeft &&
-          poopLeft < charRight &&
-          poopBottom > charTop &&
-          poopTop < charBottom
-        ) {
-          gameOver();
-        }
-
-        fill(0);
-        stroke(255);
-        strokeWeight(3);
-        textAlign(LEFT, TOP);
-        text('점수: ' + score, 10, 10);
-        strokeWeight(1);
-      } else {
-        gameOverAnimation();
-      }
-    }
-
-    function drawWin98Background() {
-      for (let y = 0; y < height * 0.75; y++) {
-        let inter = map(y, 0, height * 0.75, 0, 1);
-        let c = lerpColor(color(0, 120, 215), color(173, 216, 230), inter);
-        stroke(c);
-        line(0, y, width, y);
-      }
-
-      noStroke();
-      fill(0, 128, 0);
-      rect(0, height * 0.75, width, height * 0.25);
+    if (poopFlyY - poopFlySize / 2 > height) {
+      background(150, 75, 0);
+      fill(255, 0, 0);
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      text('GAME OVER', width / 2, height / 2 - 50);
 
       fill(255);
-      noStroke();
-      rect(50, 60, 40, 20);
-      rect(80, 50, 40, 30);
-      rect(100, 70, 30, 20);
-      rect(220, 90, 30, 20);
-      rect(250, 80, 40, 30);
-      rect(270, 100, 30, 20);
+      rectMode(CENTER);
+      rect(width / 2, height / 2 + 30, 160, 60, 12);
+      fill(0);
+      textSize(28);
+      text('다시하기', width / 2, height / 2 + 30);
+      noLoop();
+    } else {
+      loop();
     }
+  }
+}
 
-    function keyPressed() {
-      if (isGameOver) return;
+function drawWindows98BG() {
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(135, 206, 250), color(50, 205, 50), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
+}
 
-      if (keyCode === LEFT_ARROW) {
-        characterX -= 64;
-        if (characterX < 0) characterX = 0;
-      } else if (keyCode === RIGHT_ARROW) {
-        characterX += 64;
-        if (characterX > width - 64 * characterScale) characterX = width - 64 * characterScale;
-      }
+function keyPressed() {
+  if (!isGameOver) {
+    if (keyCode === LEFT_ARROW) {
+      charX -= charSize / 2;
+      if (charX < charSize / 2) charX = charSize / 2;
+    } else if (keyCode === RIGHT_ARROW) {
+      charX += charSize / 2;
+      if (charX > width - charSize / 2) charX = width - charSize / 2;
     }
-
-    function createButtons() {
-      leftBtn = createButton('⬅️');
-      leftBtn.style('font-size', '32px');
-      leftBtn.position(50, height + 10);
-      leftBtn.touchStarted(() => {
-        if (isGameOver) return;
-        characterX -= 64;
-        if (characterX < 0) characterX = 0;
-      });
-
-      rightBtn = createButton('➡️');
-      rightBtn.style('font-size', '32px');
-      rightBtn.position(200, height + 10);
-      rightBtn.touchStarted(() => {
-        if (isGameOver) return;
-        characterX += 64;
-        if (characterX > width - 64 * characterScale) characterX = width - 64 * characterScale;
-      });
-
-      restartBtn = createButton('다시하기');
-      restartBtn.style('font-size', '24px');
-      restartBtn.position(width / 2 - 50, height / 2 + 150);
-      restartBtn.hide();
-      restartBtn.mousePressed(() => {
-        resetGame();
-      });
+  } else {
+    if (keyCode === ENTER) {
+      resetGame();
     }
+  }
+}
 
-    function gameOver() {
-      if (!isGameOver) {
-        isGameOver = true;
-        poopSpeed = 0;
-        gameOverFrame = frameCount;
-        restartBtn.hide();
-      }
+function mousePressed() {
+  if (isGameOver) {
+    let bx = width / 2;
+    let by = height / 2 + 30;
+    let bw = 160;
+    let bh = 60;
+    if (
+      mouseX > bx - bw / 2 &&
+      mouseX < bx + bw / 2 &&
+      mouseY > by - bh / 2 &&
+      mouseY < by + bh / 2
+    ) {
+      resetGame();
     }
+  }
+}
 
-    function gameOverAnimation() {
-      let t = frameCount - gameOverFrame;
-      background(0, 0, 0, 100);
-
-      let maxT = 60;
-      let progress = constrain(t / maxT, 0, 1);
-      let size = lerp(64, width * 2, progress);
-
-      push();
-      imageMode(CENTER);
-      translate(width / 2, height / 2);
-      rotate(progress * TWO_PI * 3);
-      tint(255, 255 * (1 - progress));
-      image(poopImg, 0, 0, size, size);
-      pop();
-
-      if (progress > 0.7) {
-        let coverAlpha = map(progress, 0.7, 1, 0, 230);
-        fill(139, 69, 19, coverAlpha);
-        noStroke();
-        rect(0, 0, width, height);
-      }
-
-      if (progress > 0.9) {
-        let txtAlpha = map(progress, 0.9, 1, 0, 255);
-        textAlign(CENTER, CENTER);
-        textSize(48);
-        fill(255, 0, 0, txtAlpha);
-        stroke(0, txtAlpha);
-        strokeWeight(4);
-        text('Game Over', width / 2, height / 2 + 100);
-      }
-
-      if (progress >= 1) {
-        restartBtn.show();
-      }
-    }
-
-    function resetGame() {
-      isGameOver = false;
-      poopY = -64;
-      poopX = random(width - 64);
-      characterX = width / 2 - 32;
-      poopSpeed = 4;
-      score = 0;
-      characterScale = 1;
-      restartBtn.hide();
-    }
-  </script>
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
 </body>
 </html>
