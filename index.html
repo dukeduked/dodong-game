@@ -10,23 +10,26 @@
     margin: 0; padding: 0; overflow: hidden;
     height: 100%; width: 100%;
     background: #87cefa;
+    position: relative;
   }
   canvas {
     display: block;
   }
-  button {
-    position: absolute;
+  /* 버튼 스타일 */
+  button.controlBtn {
+    position: fixed;
     bottom: 20px;
     width: 70px;
     height: 70px;
     font-size: 36px;
-    opacity: 0.8;
+    opacity: 0.85;
     user-select: none;
     border-radius: 12px;
     border: none;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     cursor: pointer;
+    z-index: 1000;
   }
   #leftBtn {
     left: 40%;
@@ -37,6 +40,10 @@
 </style>
 </head>
 <body>
+
+<button id="leftBtn" class="controlBtn">◀</button>
+<button id="rightBtn" class="controlBtn">▶</button>
+
 <script>
 let poopImg, charImg;
 let charX, charY, charSize;
@@ -45,8 +52,6 @@ let poopSpeed;
 let isGameOver = false;
 let poopFlyX, poopFlyY, poopFlySize;
 let score = 0;
-
-let leftBtn, rightBtn;
 
 function preload() {
   poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
@@ -60,30 +65,11 @@ function setup() {
   textSize(24);
   fill(255);
 
-  // 방향키 버튼을 캔버스 내부에 위치시키기 위해 parent로 body 대신 캔버스 대신 body로
-  leftBtn = createButton('◀');
-  leftBtn.id('leftBtn');
-  leftBtn.size(70, 70);
-  leftBtn.style('font-size', '36px');
-  leftBtn.style('opacity', '0.8');
-  leftBtn.style('border-radius', '12px');
-  leftBtn.style('border', 'none');
-  leftBtn.style('background-color', 'rgba(255,255,255,0.7)');
-  leftBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
-  leftBtn.position(width * 0.4, height - 90);
-  leftBtn.touchStarted(() => moveLeft());
-
-  rightBtn = createButton('▶');
-  rightBtn.id('rightBtn');
-  rightBtn.size(70, 70);
-  rightBtn.style('font-size', '36px');
-  rightBtn.style('opacity', '0.8');
-  rightBtn.style('border-radius', '12px');
-  rightBtn.style('border', 'none');
-  rightBtn.style('background-color', 'rgba(255,255,255,0.7)');
-  rightBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
-  rightBtn.position(width * 0.55, height - 90);
-  rightBtn.touchStarted(() => moveRight());
+  // 버튼 이벤트 연결 (html 버튼)
+  document.getElementById('leftBtn').addEventListener('touchstart', moveLeft);
+  document.getElementById('leftBtn').addEventListener('mousedown', moveLeft);
+  document.getElementById('rightBtn').addEventListener('touchstart', moveRight);
+  document.getElementById('rightBtn').addEventListener('mousedown', moveRight);
 }
 
 function resetGame() {
@@ -219,8 +205,6 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  leftBtn.position(width * 0.4, height - 90);
-  rightBtn.position(width * 0.55, height - 90);
 }
 </script>
 </body>
