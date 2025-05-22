@@ -1,147 +1,51 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>똥피하기 게임 with Ranking</title>
-<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
-<style>
-  html, body {
-    margin: 0; padding: 0; overflow: hidden;
-    height: 100%; width: 100%;
-    background: #87cefa;
-    touch-action: manipulation;
-    -ms-touch-action: manipulation;
-    overscroll-behavior: contain;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
-    font-family: 'Arial', sans-serif;
-  }
-  canvas {
-    display: block;
-  }
-  #nicknameContainer {
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255,255,255,0.9);
-    padding: 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    text-align: center;
-  }
-  #nicknameInput {
-    font-size: 24px;
-    padding: 8px 12px;
-    width: 250px;
-    border-radius: 8px;
-    border: 2px solid #444;
-    margin-bottom: 15px;
-    outline: none;
-  }
-  #startBtn {
-    font-size: 24px;
-    padding: 10px 25px;
-    border: none;
-    background: #4CAF50;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  #rankingContainer {
-    position: absolute;
-    top: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 320px;
-    max-height: 320px;
-    overflow-y: auto;
-    background: rgba(255,255,255,0.9);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    font-size: 18px;
-  }
-  #rankingContainer h3 {
-    margin-top: 0;
-    text-align: center;
-  }
-  #rankingList {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-  }
-  #rankingList li {
-    padding: 6px 0;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-  }
-  #rankingList li.selfRank {
-    font-weight: bold;
-    color: #E91E63;
-  }
-  #leftBtn, #rightBtn {
-    position: absolute;
-    bottom: 20px;
-    width: 70px;
-    height: 70px;
-    font-size: 36px;
-    opacity: 0.8;
-    user-select: none;
-    border-radius: 12px;
-    border: none;
-    background-color: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    cursor: pointer;
-    -webkit-user-select:none;
-    -webkit-touch-callout:none;
-  }
-  #leftBtn { left: 40%; }
-  #rightBtn { left: 55%; }
-  #scoreDisplay {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 28px;
-    color: white;
-    font-weight: bold;
-    text-shadow: 0 0 5px black;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>똥피하기 게임</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      touch-action: manipulation;
+      -ms-touch-action: manipulation;
+    }
+    canvas {
+      display: block;
+    }
+    button {
+      position: absolute;
+      bottom: 20px;
+      width: 70px;
+      height: 70px;
+      font-size: 36px;
+      opacity: 0.8;
+      user-select: none;
+      border-radius: 12px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+  </style>
 </head>
 <body>
-
-<div id="nicknameContainer">
-  <h2>닉네임을 입력하세요</h2>
-  <input id="nicknameInput" maxlength="12" placeholder="닉네임" />
-  <br />
-  <button id="startBtn">게임 시작</button>
-</div>
-
-<div id="scoreDisplay" style="display:none;">점수: 0</div>
-<div id="rankingContainer" style="display:none;">
-  <h3>랭킹</h3>
-  <ul id="rankingList"></ul>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 <script>
 let poopImg, charImg;
 let charX, charY, charSize;
-let poopX, poopY, poopSize;
-let poopSpeed;
-let isGameOver = false;
-let poopFlyX, poopFlyY, poopFlySize;
+let poopX, poopY, poopSize, poopSpeed;
 let score = 0;
+let isGameOver = false;
+let showRanking = false;
+let nickname = '';
+let nicknameEntered = false;
+let ranking = [];
 
 let leftBtn, rightBtn;
-
-let nickname = '';
-let rankings = [];
 
 function preload() {
   poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
@@ -149,276 +53,184 @@ function preload() {
 }
 
 function setup() {
-  noCanvas(); // 일단 p5 캔버스 없애고 나중에 다시 만들어야 함.
-
-  // 닉네임 입력창 버튼 이벤트 등록
-  document.getElementById('startBtn').addEventListener('click', () => {
-    const input = document.getElementById('nicknameInput');
-    const name = input.value.trim();
-    if (name.length < 1) {
-      alert('닉네임을 입력해주세요!');
-      input.focus();
-      return;
-    }
-    nickname = name;
-    startGame();
-  });
-}
-
-function startGame() {
-  document.getElementById('nicknameContainer').style.display = 'none';
-  document.getElementById('scoreDisplay').style.display = 'block';
-  document.getElementById('rankingContainer').style.display = 'none';
-
   createCanvas(windowWidth, windowHeight);
-  resetGame();
-
-  // 좌우 버튼 생성 및 이벤트 등록
-  if (!leftBtn) {
-    leftBtn = createButton('◀');
-    leftBtn.id('leftBtn');
-    leftBtn.size(70, 70);
-    leftBtn.style('font-size', '36px');
-    leftBtn.style('opacity', '0.8');
-    leftBtn.style('border-radius', '12px');
-    leftBtn.style('border', 'none');
-    leftBtn.style('background-color', 'rgba(255,255,255,0.7)');
-    leftBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
-    leftBtn.position(width * 0.4, height - 90);
-    leftBtn.touchStarted(() => moveLeft());
-
-    rightBtn = createButton('▶');
-    rightBtn.id('rightBtn');
-    rightBtn.size(70, 70);
-    rightBtn.style('font-size', '36px');
-    rightBtn.style('opacity', '0.8');
-    rightBtn.style('border-radius', '12px');
-    rightBtn.style('border', 'none');
-    rightBtn.style('background-color', 'rgba(255,255,255,0.7)');
-    rightBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
-    rightBtn.position(width * 0.55, height - 90);
-    rightBtn.touchStarted(() => moveRight());
-  } else {
-    leftBtn.show();
-    rightBtn.show();
-    leftBtn.position(width * 0.4, height - 90);
-    rightBtn.position(width * 0.55, height - 90);
-  }
-
-  // 터치 확대 막기 (더블탭, 핀치줌)
-  let lastTouchEnd = 0;
-  document.addEventListener('touchstart', function(event) {
-    if (event.touches.length > 1) {
-      event.preventDefault();
-    }
-  }, { passive: false });
-  document.addEventListener('touchend', function(event) {
-    let now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      event.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, false);
-
-  loop();
-}
-
-function resetGame() {
-  charSize = 80;
-  charX = width / 2;
-  charY = height - 30;
-  poopSize = 60;
-  poopX = random(poopSize / 2, width - poopSize / 2);
-  poopY = -poopSize;
-  poopSpeed = 5;
-  isGameOver = false;
-  poopFlyX = null;
-  poopFlyY = null;
-  poopFlySize = poopSize;
-  score = 0;
+  textAlign(CENTER, CENTER);
+  noLoop();
 }
 
 function draw() {
-  if (!canvas) return;
+  background(220);
 
-  drawWindows98BG();
-
-  if (!isGameOver) {
-    // 캐릭터 흰색 틴트 적용하며 이미지 그리기 (발 기준으로 위로 커짐)
-    tint(255, 255);
-    image(charImg, charX - charSize / 2, charY - charSize, charSize, charSize * (charImg.height / charImg.width));
-    noTint();
-
-    image(poopImg, poopX - poopSize / 2, poopY, poopSize, poopSize);
-
-    poopY += poopSpeed;
-
-    let charLeft = charX - charSize / 4;
-    let charRight = charX + charSize / 4;
-
-    // 충돌 감지
-    if (
-      poopY + poopSize / 2 >= charY - charSize / 2 &&
-      poopX > charLeft && poopX < charRight
-    ) {
-      isGameOver = true;
-      poopFlyX = poopX;
-      poopFlyY = poopY;
-      poopFlySize = poopSize;
-      saveScoreAndShowRanking();
-      noLoop();
-      loop();
-    } else if (poopY > height) {
-      score++;
-      poopSpeed *= 1.05;
-      charSize = min(charSize * 2, 300);
-      poopX = random(poopSize / 2, width - poopSize / 2);
-      poopY = -poopSize;
-    }
-
-    document.getElementById('scoreDisplay').textContent = '점수: ' + score;
+  if (!nicknameEntered) {
+    drawNicknameInput();
+  } else if (isGameOver) {
+    drawGameOver();
   } else {
-    poopFlyY += 40;
-    poopFlySize *= 1.3;
-    poopFlyX = width / 2;
+    drawGame();
+  }
+}
 
-    background(150, 75, 0, map(poopFlySize, poopSize, width * 3, 0, 150));
-    tint(255, 255, 255, 200);
-    image(poopImg, poopFlyX - poopFlySize / 2, poopFlyY - poopFlySize / 2, poopFlySize, poopFlySize);
-    noTint();
+function drawNicknameInput() {
+  background(200);
+  textAlign(CENTER, CENTER);
+  textSize(36);
+  fill(80);
+  text('💩 똥피하기 게임 💨', width / 2, height / 2 - 150);
 
-    if (poopFlyY - poopFlySize / 2 > height) {
-      background(150, 75, 0);
-      fill(255, 0, 0);
-      textAlign(CENTER, CENTER);
-      textSize(48);
-      text('GAME OVER', width / 2, height / 2 - 50);
+  fill(0);
+  textSize(24);
+  text('닉네임을 입력하세요', width / 2, height / 2 - 80);
 
-      fill(255);
-      rectMode(CENTER);
-      rect(width / 2, height / 2 + 30, 160, 60, 12);
-      fill(0);
-      textSize(28);
-      text('다시하기', width / 2, height / 2 + 30);
-      noLoop();
-    } else {
+  fill(255);
+  rectMode(CENTER);
+  rect(width / 2, height / 2, 240, 50, 12);
+
+  fill(0);
+  textAlign(LEFT, CENTER);
+  text(nickname || '닉네임', width / 2 - 100, height / 2);
+
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  text('화면을 터치해서 시작', width / 2, height / 2 + 80);
+}
+
+function drawGame() {
+  background(135, 206, 250);
+
+  image(poopImg, poopX - poopSize / 2, poopY, poopSize, poopSize);
+  image(charImg, charX - charSize / 2, charY - charSize, charSize, charSize);
+
+  poopY += poopSpeed;
+
+  if (poopY + poopSize / 2 >= charY - charSize &&
+      poopX > charX - charSize / 2 && poopX < charX + charSize / 2) {
+    isGameOver = true;
+    updateRanking();
+    showRanking = true;
+    noLoop();
+  } else if (poopY > height) {
+    poopY = -poopSize;
+    poopX = random(poopSize / 2, width - poopSize / 2);
+    score++;
+    poopSpeed += 0.5;
+    charSize = min(charSize + 20, 200);
+    charY = height - 30;
+  }
+
+  fill(255);
+  textSize(24);
+  textAlign(RIGHT, TOP);
+  text('Score: ' + score, width - 20, 20);
+}
+
+function drawGameOver() {
+  background(50);
+  fill(255, 0, 0);
+  textSize(48);
+  text('GAME OVER', width / 2, 100);
+
+  textSize(28);
+  fill(255);
+  text('당신의 점수: ' + score, width / 2, 160);
+
+  drawRankingBoard();
+
+  fill(255);
+  rect(width / 2 - 80, height - 120, 160, 60, 12);
+  fill(0);
+  textSize(24);
+  text('다시하기', width / 2, height - 90);
+}
+
+function drawRankingBoard() {
+  textSize(24);
+  fill(255);
+  let shown = 0;
+  let foundSelf = false;
+  let yStart = 220;
+
+  for (let i = 0; i < ranking.length; i++) {
+    if (i < 5 || ranking[i].name === nickname) {
+      let label = `${i + 1}등 ${ranking[i].name} - ${ranking[i].score}`;
+      text(label, width / 2, yStart + shown * 30);
+      shown++;
+      if (i === 4 && !foundSelf && ranking.length > 5) {
+        text('...', width / 2, yStart + shown * 30);
+        shown++;
+      }
+    }
+    if (ranking[i].name === nickname) foundSelf = true;
+  }
+}
+
+function touchStarted() {
+  if (!nicknameEntered) {
+    if (nickname.length > 0) {
+      nicknameEntered = true;
+      resetGame();
+      loop();
+    }
+  } else if (isGameOver) {
+    if (
+      mouseX > width / 2 - 80 &&
+      mouseX < width / 2 + 80 &&
+      mouseY > height - 120 &&
+      mouseY < height - 60
+    ) {
+      nicknameEntered = false;
+      nickname = '';
+      score = 0;
+      isGameOver = false;
       loop();
     }
   }
-}
-
-function saveScoreAndShowRanking() {
-  let rankData = JSON.parse(localStorage.getItem('poopGameRank') || '[]');
-  rankData.push({name: nickname, score: score});
-  // 내림차순 정렬
-  rankData.sort((a,b) => b.score - a.score);
-  // 최대 100개만 저장
-  rankData = rankData.slice(0, 100);
-  localStorage.setItem('poopGameRank', JSON.stringify(rankData));
-  rankings = rankData;
-  showRanking();
-}
-
-function showRanking() {
-  document.getElementById('rankingContainer').style.display = 'block';
-  document.getElementById('scoreDisplay').style.display = 'none';
-  leftBtn.hide();
-  rightBtn.hide();
-
-  let ul = document.getElementById('rankingList');
-  ul.innerHTML = '';
-
-  // 내 순위 찾기
-  let myRankIndex = rankings.findIndex(r => r.name === nickname && r.score === score);
-
-  // 상위 5명 출력
-  for (let i=0; i<Math.min(5, rankings.length); i++) {
-    let li = document.createElement('li');
-    li.textContent = `${i+1}. ${rankings[i].name}`;
-    let span = document.createElement('span');
-    span.textContent = rankings[i].score;
-    li.appendChild(span);
-    if (i === myRankIndex) li.classList.add('selfRank');
-    ul.appendChild(li);
-  }
-
-  // 5위 이후 … 표시
-  if(rankings.length > 5){
-    let li = document.createElement('li');
-    li.textContent = '...';
-    ul.appendChild(li);
-  }
-
-  // 내 순위가 6위 이하면 별도 표시
-  if(myRankIndex >= 5){
-    let li = document.createElement('li');
-    li.classList.add('selfRank');
-    li.textContent = `${myRankIndex+1}. ${nickname}`;
-    let span = document.createElement('span');
-    span.textContent = score;
-    li.appendChild(span);
-    ul.appendChild(li);
-  }
+  return false;
 }
 
 function keyPressed() {
-  if (!isGameOver) {
-    if (keyCode === LEFT_ARROW) moveLeft();
-    else if (keyCode === RIGHT_ARROW) moveRight();
+  if (!nicknameEntered) {
+    if (keyCode === BACKSPACE || keyCode === DELETE) {
+      nickname = nickname.substring(0, nickname.length - 1);
+    } else if (key.length === 1 && nickname.length < 10) {
+      nickname += key;
+    }
   } else {
-    if (keyCode === ENTER) resetGameAndRestart();
+    if (keyCode === LEFT_ARROW) moveLeft();
+    if (keyCode === RIGHT_ARROW) moveRight();
   }
 }
 
 function moveLeft() {
-  charX -= charSize / 4;
+  charX -= charSize / 2;
+  if (charX < -charSize) charX = -charSize; // 화면 밖 가능
 }
 
 function moveRight() {
-  charX += charSize / 4;
+  charX += charSize / 2;
+  if (charX > width + charSize) charX = width + charSize;
 }
 
-function mousePressed() {
-  if (isGameOver) {
-    let bx = width / 2;
-    let by = height / 2 + 30;
-    let bw = 160;
-    let bh = 60;
-    if (
-      mouseX > bx - bw / 2 &&
-      mouseX < bx + bw / 2 &&
-      mouseY > by - bh / 2 &&
-      mouseY < by + bh / 2
-    ) {
-      resetGameAndRestart();
-    }
-  }
+function updateRanking() {
+  ranking.push({ name: nickname, score });
+  ranking.sort((a, b) => b.score - a.score);
 }
 
-function resetGameAndRestart() {
-  resetGame();
-  document.getElementById('rankingContainer').style.display = 'none';
-  document.getElementById('scoreDisplay').style.display = 'block';
-  leftBtn.show();
-  rightBtn.show();
+function resetGame() {
+  score = 0;
+  charSize = 80;
+  charX = width / 2;
+  charY = height - 30;
+  poopSize = 60;
+  poopSpeed = 5;
+  poopX = random(poopSize / 2, width - poopSize / 2);
+  poopY = -poopSize;
+  isGameOver = false;
   loop();
-}
-
-function drawWindows98BG() {
-  for (let y = 0; y < height; y++) {
-    let inter = map(y, 0, height, 0, 1);
-    let c = lerpColor(color(135, 206, 250), color(50, 205, 50), inter);
-    stroke(c);
-    line(0, y, width, y);
-  }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  if(leftBtn && rightBtn) {
-    leftBtn.position(width * 0.4, height - 90);
-    rightBtn.position(width * 0.55, height - 90);
-  }
 }
 </script>
 </body>
