@@ -6,30 +6,36 @@
 <title>똥피하기 게임</title>
 <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 <style>
-  body, html {
+  html, body {
     margin: 0; padding: 0; overflow: hidden;
     height: 100%; width: 100%;
     background: #87cefa;
-    position: relative;
+    touch-action: manipulation; /* 터치 확대 방지 */
+    -ms-touch-action: manipulation;
+    overscroll-behavior: contain;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
   canvas {
     display: block;
   }
-  /* 버튼 스타일 */
-  button.controlBtn {
-    position: fixed;
+  button {
+    position: absolute;
     bottom: 20px;
     width: 70px;
     height: 70px;
     font-size: 36px;
-    opacity: 0.85;
+    opacity: 0.8;
     user-select: none;
     border-radius: 12px;
     border: none;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.7);
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     cursor: pointer;
-    z-index: 1000;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
   }
   #leftBtn {
     left: 40%;
@@ -40,10 +46,6 @@
 </style>
 </head>
 <body>
-
-<button id="leftBtn" class="controlBtn">◀</button>
-<button id="rightBtn" class="controlBtn">▶</button>
-
 <script>
 let poopImg, charImg;
 let charX, charY, charSize;
@@ -52,6 +54,8 @@ let poopSpeed;
 let isGameOver = false;
 let poopFlyX, poopFlyY, poopFlySize;
 let score = 0;
+
+let leftBtn, rightBtn;
 
 function preload() {
   poopImg = loadImage('https://i.imgur.com/2UOZnSj.png');
@@ -65,17 +69,52 @@ function setup() {
   textSize(24);
   fill(255);
 
-  // 버튼 이벤트 연결 (html 버튼)
-  document.getElementById('leftBtn').addEventListener('touchstart', moveLeft);
-  document.getElementById('leftBtn').addEventListener('mousedown', moveLeft);
-  document.getElementById('rightBtn').addEventListener('touchstart', moveRight);
-  document.getElementById('rightBtn').addEventListener('mousedown', moveRight);
+  // 좌우 버튼 생성 및 스타일링
+  leftBtn = createButton('◀');
+  leftBtn.id('leftBtn');
+  leftBtn.size(70, 70);
+  leftBtn.style('font-size', '36px');
+  leftBtn.style('opacity', '0.8');
+  leftBtn.style('border-radius', '12px');
+  leftBtn.style('border', 'none');
+  leftBtn.style('background-color', 'rgba(255,255,255,0.7)');
+  leftBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
+  leftBtn.position(width * 0.4, height - 90);
+  leftBtn.touchStarted(() => moveLeft());
+
+  rightBtn = createButton('▶');
+  rightBtn.id('rightBtn');
+  rightBtn.size(70, 70);
+  rightBtn.style('font-size', '36px');
+  rightBtn.style('opacity', '0.8');
+  rightBtn.style('border-radius', '12px');
+  rightBtn.style('border', 'none');
+  rightBtn.style('background-color', 'rgba(255,255,255,0.7)');
+  rightBtn.style('box-shadow', '0 2px 5px rgba(0,0,0,0.3)');
+  rightBtn.position(width * 0.55, height - 90);
+  rightBtn.touchStarted(() => moveRight());
+
+  // 터치 확대 막기 (더블탭, 핀치줌)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) {
+      event.preventDefault(); // 두 손가락 터치 확대 방지
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(event) {
+    let now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault(); // 더블탭 확대 방지
+    }
+    lastTouchEnd = now;
+  }, false);
 }
 
 function resetGame() {
   charSize = 80;
   charX = width / 2;
-  charY = height - charSize - 30;
+  charY = height - 30;  // 발 위치 기준 Y 고정 (발 아래로 안 내려감)
   poopSize = 60;
   poopX = random(poopSize / 2, width - poopSize / 2);
   poopY = -poopSize;
@@ -92,8 +131,10 @@ function draw() {
   drawWindows98BG();
 
   if (!isGameOver) {
-    tint(255, 0, 0);
-    image(charImg, charX - charSize / 2, charY, charSize, charSize * (charImg.height / charImg.width));
+    // 캐릭터 흰색 틴트 적용하며 이미지 그리기 (발 기준으로 위로 커짐)
+    tint(255, 255);
+    // charY - charSize : 캐릭터 크기 만큼 위로 올려서 발 기준으로 커지도록
+    image(charImg, charX - charSize / 2, charY - charSize, charSize, charSize * (charImg.height / charImg.width));
     noTint();
 
     image(poopImg, poopX - poopSize / 2, poopY, poopSize, poopSize);
@@ -102,8 +143,10 @@ function draw() {
 
     let charLeft = charX - charSize / 4;
     let charRight = charX + charSize / 4;
+
+    // 충돌 감지 (똥이 캐릭터 영역에 닿으면 게임 오버)
     if (
-      poopY + poopSize / 2 >= charY &&
+      poopY + poopSize / 2 >= charY - charSize / 2 &&
       poopX > charLeft && poopX < charRight
     ) {
       isGameOver = true;
@@ -115,7 +158,7 @@ function draw() {
     } else if (poopY > height) {
       score++;
       poopSpeed *= 1.05;
-      // 캐릭터가 2배씩 커지게 (최대 크기 제한 300)
+      // 캐릭터 2배 커지기 (최대 300)
       charSize = min(charSize * 2, 300);
       poopX = random(poopSize / 2, width - poopSize / 2);
       poopY = -poopSize;
@@ -129,7 +172,7 @@ function draw() {
     poopFlyX = width / 2;
 
     background(150, 75, 0, map(poopFlySize, poopSize, width * 3, 0, 150));
-    tint(255, 0, 0);
+    tint(255, 255, 255, 200);
     image(poopImg, poopFlyX - poopFlySize / 2, poopFlyY - poopFlySize / 2, poopFlySize, poopFlySize);
     noTint();
 
@@ -177,13 +220,13 @@ function keyPressed() {
 }
 
 function moveLeft() {
-  charX -= charSize / 2;
-  if (charX < charSize / 2) charX = charSize / 2;
+  charX -= charSize / 4; // 더 부드럽게 움직임
+  // 화면 밖 이동 허용 (버그 컨셉)
 }
 
 function moveRight() {
-  charX += charSize / 2;
-  if (charX > width - charSize / 2) charX = width - charSize / 2;
+  charX += charSize / 4;
+  // 화면 밖 이동 허용
 }
 
 function mousePressed() {
@@ -205,7 +248,10 @@ function mousePressed() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  leftBtn.position(width * 0.4, height - 90);
+  rightBtn.position(width * 0.55, height - 90);
 }
 </script>
 </body>
 </html>
+
